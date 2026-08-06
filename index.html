@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Crack the Code</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background: #000;
+    color: #e6edf3;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  body {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: calc(env(safe-area-inset-top) + 24px) 20px 12px;
+    width: 100%;
+  }
+  h1 {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    color: #fff;
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    color: #f5c76a;
+    font-size: 15px;
+    font-style: italic;
+    margin-bottom: 26px;
+    text-align: center;
+  }
+  .instr {
+    color: #8b949e;
+    font-size: 15px;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+  .slots {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+  }
+  .slot {
+    width: 58px;
+    height: 66px;
+    border-radius: 14px;
+    background: #0d1f13;
+    border: 1.5px solid #1f4a2a;
+    color: #3fb950;
+    font-size: 32px;
+    font-weight: 800;
+    text-align: center;
+    text-transform: uppercase;
+    outline: none;
+    caret-color: #3fb950;
+    padding: 0;
+    font-family: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+    user-select: text;
+    -webkit-user-select: text;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .slot:focus {
+    border-color: #3fb950;
+    background: #12291a;
+  }
+  .slot.filled {
+    background: #12291a;
+    border-color: #2ea043;
+  }
+  .slot.error {
+    border-color: #f85149;
+    background: #2d0e10;
+    animation: shake 0.32s;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+  .pill {
+    border: 1.5px solid #58a6ff;
+    color: #58a6ff;
+    background: transparent;
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+    width: 100%;
+    max-width: 360px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    line-height: 1.2;
+  }
+  .pill.win {
+    border-color: #2ea043;
+    color: #2ea043;
+  }
+  .pill .dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+  .btn {
+    width: 100%;
+    max-width: 360px;
+    padding: 16px;
+    font-size: 17px;
+    font-weight: 700;
+    border-radius: 14px;
+    border: none;
+    background: #22c55e;
+    color: #052e16;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .btn:disabled {
+    background: #0f3d1c;
+    color: #4a7d55;
+    cursor: default;
+  }
+  .btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+  .history-wrap {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 24px 20px calc(env(safe-area-inset-bottom) + 20px);
+    max-height: 55vh;
+    overflow-y: auto;
+    display: none;
+    background: linear-gradient(180deg, transparent 0%, #000 15%);
+  }
+  .history-wrap.show { display: block; }
+  .reveal {
+    text-align: center;
+    color: #8b949e;
+    font-size: 14px;
+    margin-bottom: 14px;
+  }
+  .reveal .secret {
+    display: block;
+    font-family: monospace;
+    font-size: 26px;
+    letter-spacing: 8px;
+    color: #fff;
+    font-weight: 800;
+    margin-top: 6px;
+  }
+  .h-title {
+    color: #8b949e;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    text-align: center;
+    margin: 6px 0 8px;
+  }
+  .h-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 10px;
+    margin-bottom: 6px;
+    font-family: monospace;
+  }
+  .h-guess {
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    font-size: 15px;
+    color: #e6edf3;
+  }
+  .h-score {
+    color: #3fb950;
+    font-weight: 700;
+    font-size: 15px;
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <h1>Crack the Code</h1>
+    <p class="subtitle">Alphanumeric code</p>
+    <p class="instr">Enter the 5-character code</p>
+    <div class="slots" id="slots">
+      <input class="slot" data-i="0" maxlength="1" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" enterkeyhint="next">
+      <input class="slot" data-i="1" maxlength="1" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" enterkeyhint="next">
+      <input class="slot" data-i="2" maxlength="1" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" enterkeyhint="next">
+      <input class="slot" data-i="3" maxlength="1" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" enterkeyhint="next">
+      <input class="slot" data-i="4" maxlength="1" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done">
+    </div>
+    <div class="pill" id="pill"><span class="dot"></span><span id="pillText">Enter your guess</span></div>
+    <button class="btn" id="btn">Crack It</button>
+  </div>
+
+  <div class="history-wrap" id="historyWrap">
+    <div class="reveal">The code was <span class="secret" id="secretReveal"></span></div>
+    <div class="h-title">All guesses</div>
+    <div id="historyList"></div>
+  </div>
+
+<script>
+(function() {
+  var LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  var DIGITS = '0123456789';
+  var secret = '';
+  var history = [];
+  var won = false;
+  var cooldownTimer = null;
+
+  var slots = Array.prototype.slice.call(document.querySelectorAll('.slot'));
+  var pill = document.getElementById('pill');
+  var pillText = document.getElementById('pillText');
+  var btn = document.getElementById('btn');
+  var historyWrap = document.getElementById('historyWrap');
+  var historyList = document.getElementById('historyList');
+  var secretReveal = document.getElementById('secretReveal');
+
+  function randInt(max) {
+    var arr = new Uint32Array(1);
+    var limit = Math.floor(0x100000000 / max) * max;
+    while (true) {
+      crypto.getRandomValues(arr);
+      if (arr[0] < limit) return arr[0] % max;
+    }
+  }
+
+  function pickUnique(pool, count) {
+    var chars = [];
+    var used = {};
+    while (chars.length < count) {
+      var c = pool.charAt(randInt(pool.length));
+      if (!used[c]) { used[c] = true; chars.push(c); }
+    }
+    return chars;
+  }
+
+  function generateSecret() {
+    var letters = pickUnique(LETTERS, 4);
+    var digit = pickUnique(DIGITS, 1)[0];
+    var digitPos = randInt(5);
+    letters.splice(digitPos, 0, digit);
+    return letters.join('');
+  }
+
+  function score(guess, secret) {
+    var x = 0, y = 0;
+    var sRem = [], gRem = [];
+    for (var i = 0; i < 5; i++) {
+      if (guess.charAt(i) === secret.charAt(i)) x++;
+      else { sRem.push(secret.charAt(i)); gRem.push(guess.charAt(i)); }
+    }
+    for (var j = 0; j < gRem.length; j++) {
+      var idx = sRem.indexOf(gRem[j]);
+      if (idx !== -1) { y++; sRem.splice(idx, 1); }
+    }
+    return { x: x, y: y };
+  }
+
+  function isValidChar(c) {
+    var code = c.charCodeAt(0);
+    return (code >= 65 && code <= 90) || (code >= 48 && code <= 57);
+  }
+
+  function currentGuess() {
+    var g = '';
+    for (var i = 0; i < 5; i++) g += (slots[i].value || '');
+    return g.toUpperCase();
+  }
+
+  function flashError(el) {
+    el.classList.add('error');
+    setTimeout(function() { el.classList.remove('error'); }, 340);
+  }
+
+  function updatePillIdle() {
+    pill.classList.remove('win');
+    pillText.textContent = 'Enter your guess';
+  }
+
+  slots.forEach(function(slot, i) {
+    slot.addEventListener('input', function(e) {
+      var v = (slot.value || '').toUpperCase();
+      if (!v) { slot.classList.remove('filled'); return; }
+      var c = v.charAt(v.length - 1);
+      if (!isValidChar(c)) {
+        slot.value = '';
+        slot.classList.remove('filled');
+        flashError(slot);
+        return;
+      }
+      slot.value = c;
+      slot.classList.add('filled');
+      if (i < 4) slots[i + 1].focus();
+    });
+    slot.addEventListener('keydown', function(e) {
+      if (e.key === 'Backspace') {
+        if (!slot.value && i > 0) {
+          e.preventDefault();
+          slots[i - 1].value = '';
+          slots[i - 1].classList.remove('filled');
+          slots[i - 1].focus();
+        }
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        handleBtn();
+      }
+    });
+    slot.addEventListener('focus', function() {
+      setTimeout(function() { try { slot.select(); } catch (e) {} }, 0);
+    });
+    slot.addEventListener('paste', function(e) {
+      e.preventDefault();
+      var raw = ((e.clipboardData || window.clipboardData).getData('text') || '').toUpperCase();
+      var text = '';
+      for (var k = 0; k < raw.length; k++) {
+        if (isValidChar(raw.charAt(k))) text += raw.charAt(k);
+      }
+      for (var m = 0; m < text.length && (i + m) < 5; m++) {
+        slots[i + m].value = text.charAt(m);
+        slots[i + m].classList.add('filled');
+      }
+      var next = Math.min(i + text.length, 4);
+      slots[next].focus();
+    });
+  });
+
+  function tryGuess() {
+    if (btn.disabled) return;
+    var g = currentGuess();
+    if (g.length < 5) {
+      for (var i = 0; i < 5; i++) {
+        if (!slots[i].value) flashError(slots[i]);
+      }
+      return;
+    }
+    var s = score(g, secret);
+    history.push({ guess: g, x: s.x, y: s.y });
+    if (s.x === 5) {
+      pill.classList.add('win');
+      pillText.textContent = 'Cracked!';
+      won = true;
+      btn.textContent = 'Play Again';
+      btn.disabled = false;
+      showWin();
+    } else {
+      pillText.textContent = s.x + ' correct spot, ' + s.y + ' wrong spot — try again!';
+      startCooldown();
+      clearSlots(true);
+    }
+  }
+
+  function clearSlots(focusFirst) {
+    for (var i = 0; i < 5; i++) {
+      slots[i].value = '';
+      slots[i].classList.remove('filled');
+    }
+    if (focusFirst) {
+      setTimeout(function() { slots[0].focus(); }, 30);
+    }
+  }
+
+  function startCooldown() {
+    var remain = 3;
+    btn.disabled = true;
+    btn.textContent = 'Wait ' + remain + 's';
+    cooldownTimer = setInterval(function() {
+      remain--;
+      if (remain <= 0) {
+        clearInterval(cooldownTimer);
+        cooldownTimer = null;
+        btn.disabled = false;
+        btn.textContent = 'Crack It';
+      } else {
+        btn.textContent = 'Wait ' + remain + 's';
+      }
+    }, 1000);
+  }
+
+  function showWin() {
+    secretReveal.textContent = secret;
+    var html = '';
+    for (var i = history.length - 1; i >= 0; i--) {
+      var h = history[i];
+      html += '<div class="h-row"><span class="h-guess">' + h.guess + '</span><span class="h-score">' + h.x + ',' + h.y + '</span></div>';
+    }
+    historyList.innerHTML = html;
+    historyWrap.classList.add('show');
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  }
+
+  function newGame() {
+    if (cooldownTimer) { clearInterval(cooldownTimer); cooldownTimer = null; }
+    secret = generateSecret();
+    history = [];
+    won = false;
+    clearSlots(false);
+    updatePillIdle();
+    btn.disabled = false;
+    btn.textContent = 'Crack It';
+    historyWrap.classList.remove('show');
+    historyList.innerHTML = '';
+    secretReveal.textContent = '';
+    setTimeout(function() { slots[0].focus(); }, 50);
+  }
+
+  function handleBtn() {
+    if (won) { newGame(); return; }
+    tryGuess();
+  }
+
+  btn.addEventListener('click', handleBtn);
+
+  document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+
+  newGame();
+})();
+</script>
+</body>
+</html>
