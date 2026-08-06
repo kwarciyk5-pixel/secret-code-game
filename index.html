@@ -188,8 +188,8 @@
     margin: 6px 0 8px;
   }
   .h-row {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
     align-items: center;
     padding: 10px 14px;
     background: #0d1117;
@@ -197,6 +197,10 @@
     border-radius: 10px;
     margin-bottom: 6px;
     font-family: monospace;
+  }
+  .h-num {
+    color: #6e7681;
+    font-size: 13px;
   }
   .h-guess {
     letter-spacing: 4px;
@@ -208,6 +212,14 @@
     color: #3fb950;
     font-weight: 700;
     font-size: 15px;
+  }
+  .win-meta {
+    display: block;
+    margin-top: 10px;
+    color: #3fb950;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
   }
 </style>
 </head>
@@ -228,7 +240,10 @@
   </div>
 
   <div class="history-wrap" id="historyWrap">
-    <div class="reveal">The code was <span class="secret" id="secretReveal"></span></div>
+    <div class="reveal">
+      The code was <span class="secret" id="secretReveal"></span>
+      <span class="win-meta" id="winMeta"></span>
+    </div>
     <div class="h-title">All guesses</div>
     <div id="historyList"></div>
   </div>
@@ -241,6 +256,7 @@
   var history = [];
   var won = false;
   var cooldownTimer = null;
+  var gameStart = 0;
 
   var slots = Array.prototype.slice.call(document.querySelectorAll('.slot'));
   var pill = document.getElementById('pill');
@@ -411,12 +427,24 @@
     }, 1000);
   }
 
+  function formatDuration(ms) {
+    var totalSec = Math.round(ms / 1000);
+    var m = Math.floor(totalSec / 60);
+    var s = totalSec % 60;
+    if (m > 0) return m + ' min ' + s + ' sec';
+    return s + ' sec';
+  }
+
   function showWin() {
     secretReveal.textContent = secret;
+    var elapsed = Date.now() - gameStart;
+    var n = history.length;
+    document.getElementById('winMeta').textContent =
+      'Solved in ' + n + ' ' + (n === 1 ? 'guess' : 'guesses') + ' · ' + formatDuration(elapsed);
     var html = '';
-    for (var i = history.length - 1; i >= 0; i--) {
+    for (var i = 0; i < history.length; i++) {
       var h = history[i];
-      html += '<div class="h-row"><span class="h-guess">' + h.guess + '</span><span class="h-score">' + h.x + ',' + h.y + '</span></div>';
+      html += '<div class="h-row"><span class="h-num">#' + (i + 1) + '</span><span class="h-guess">' + h.guess + '</span><span class="h-score">' + h.x + ',' + h.y + '</span></div>';
     }
     historyList.innerHTML = html;
     historyWrap.classList.add('show');
@@ -428,6 +456,7 @@
     secret = generateSecret();
     history = [];
     won = false;
+    gameStart = Date.now();
     clearSlots(false);
     updatePillIdle();
     btn.disabled = false;
