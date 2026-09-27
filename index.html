@@ -357,7 +357,12 @@
       }
     });
     slot.addEventListener('focus', function() {
-      setTimeout(function() { try { slot.select(); } catch (e) {} }, 0);
+      setTimeout(function() {
+        try {
+          var end = (slot.value || '').length;
+          slot.setSelectionRange(end, end);
+        } catch (e) {}
+      }, 0);
     });
     slot.addEventListener('paste', function(e) {
       e.preventDefault();
