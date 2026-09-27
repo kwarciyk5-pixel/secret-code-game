@@ -411,7 +411,7 @@
     } else {
       pillText.textContent = s.x + ' correct spot, ' + s.y + ' wrong spot — try again!';
       startCooldown();
-      setTimeout(function() { slots[0].focus(); }, 30);
+      if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     }
   }
 
