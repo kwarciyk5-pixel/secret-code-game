@@ -1,4 +1,4 @@
-# SecretCode Game
+# Crack the Code
 
 A tiny browser game: crack a 5-character secret code.
 
