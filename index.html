@@ -265,6 +265,7 @@
   var historyWrap = document.getElementById('historyWrap');
   var historyList = document.getElementById('historyList');
   var secretReveal = document.getElementById('secretReveal');
+  var advancingByType = false;
 
   function randInt(max) {
     var arr = new Uint32Array(1);
@@ -341,7 +342,10 @@
       }
       slot.value = c;
       slot.classList.add('filled');
-      if (i < 4) slots[i + 1].focus();
+      if (i < 4) {
+        advancingByType = true;
+        slots[i + 1].focus();
+      }
     });
     slot.addEventListener('keydown', function(e) {
       if (e.key === 'Backspace') {
@@ -357,10 +361,16 @@
       }
     });
     slot.addEventListener('focus', function() {
+      var wasAdvancing = advancingByType;
+      advancingByType = false;
       setTimeout(function() {
         try {
-          var end = (slot.value || '').length;
-          slot.setSelectionRange(end, end);
+          if (wasAdvancing && slot.value) {
+            slot.setSelectionRange(0, slot.value.length);
+          } else {
+            var end = (slot.value || '').length;
+            slot.setSelectionRange(end, end);
+          }
         } catch (e) {}
       }, 0);
     });
