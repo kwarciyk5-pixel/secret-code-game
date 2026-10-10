@@ -32,7 +32,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: calc(env(safe-area-inset-top) + 24px) 20px 12px;
+    padding: calc(env(safe-area-inset-top) + 48px) 20px 12px;
     width: 100%;
   }
   h1 {
@@ -221,13 +221,101 @@
     font-weight: 600;
     letter-spacing: 0.3px;
   }
+  .topbar {
+    position: fixed;
+    top: calc(env(safe-area-inset-top) + 8px);
+    right: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    z-index: 20;
+  }
+  .mode-tag {
+    color: #6e7681;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+  }
+  .gear {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: #8b949e;
+    font-size: 20px;
+    line-height: 32px;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .settings {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 30;
+  }
+  .settings.show { display: flex; }
+  .settings-box {
+    width: 100%;
+    max-width: 340px;
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 16px;
+    padding: 18px;
+  }
+  .settings-title {
+    color: #8b949e;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  .mode-opt {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 8px;
+    border-radius: 12px;
+    border: 1.5px solid #1f4a2a;
+    background: #0d1f13;
+    color: #e6edf3;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .mode-opt small {
+    display: block;
+    color: #8b949e;
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 3px;
+  }
+  .mode-opt.active {
+    border-color: #3fb950;
+    background: #12291a;
+    color: #3fb950;
+  }
+  .settings-note {
+    color: #6e7681;
+    font-size: 12px;
+    text-align: center;
+    margin-top: 6px;
+  }
 </style>
 </head>
 <body>
   <div class="app">
     <h1>Crack the Code</h1>
-    <p class="subtitle">Alphanumeric code</p>
-    <p class="instr">Enter the 5-character code</p>
+    <p class="subtitle" id="subtitle">Alphanumeric code</p>
+    <p class="instr" id="instr">Enter the 5-character code</p>
     <div class="slots" id="slots">
       <input class="slot" data-i="0" maxlength="1" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" enterkeyhint="next">
       <input class="slot" data-i="1" maxlength="1" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" enterkeyhint="next">
@@ -237,6 +325,21 @@
     </div>
     <div class="pill" id="pill"><span class="dot"></span><span id="pillText">Enter your guess</span></div>
     <button class="btn" id="btn">Crack It</button>
+  </div>
+
+  <div class="topbar">
+    <span class="mode-tag" id="modeTag">4L 1N</span>
+    <button class="gear" id="gearBtn" aria-label="Settings">&#9881;&#xFE0E;</button>
+  </div>
+
+  <div class="settings" id="settings">
+    <div class="settings-box">
+      <div class="settings-title">Mode</div>
+      <button class="mode-opt" data-mode="classic">4L 1N<small>4 letters + 1 digit, no repeats</small></button>
+      <button class="mode-opt" data-mode="letters">Letters only<small>5 letters, no repeats</small></button>
+      <button class="mode-opt" data-mode="repeat">Letters may repeat<small>5 letters, repeats possible</small></button>
+      <div class="settings-note">Changing mode starts a new game</div>
+    </div>
   </div>
 
   <div class="history-wrap" id="historyWrap">
@@ -257,6 +360,16 @@
   var won = false;
   var cooldownTimer = null;
   var gameStart = 0;
+  var MODES = {
+    classic: { tag: '4L 1N', subtitle: 'Alphanumeric code', instr: 'Enter the 5-character code' },
+    letters: { tag: 'Letters only', subtitle: 'Letters only, no repeats', instr: 'Enter the 5-letter code' },
+    repeat: { tag: 'Letters may repeat', subtitle: 'Letters may repeat', instr: 'Enter the 5-letter code' }
+  };
+  var mode = 'classic';
+  try {
+    var savedMode = localStorage.getItem('ctc-mode');
+    if (savedMode && MODES[savedMode]) mode = savedMode;
+  } catch (e) {}
 
   var slots = Array.prototype.slice.call(document.querySelectorAll('.slot'));
   var pill = document.getElementById('pill');
@@ -287,6 +400,12 @@
   }
 
   function generateSecret() {
+    if (mode === 'letters') return pickUnique(LETTERS, 5).join('');
+    if (mode === 'repeat') {
+      var r = '';
+      for (var k = 0; k < 5; k++) r += LETTERS.charAt(randInt(LETTERS.length));
+      return r;
+    }
     var letters = pickUnique(LETTERS, 4);
     var digit = pickUnique(DIGITS, 1)[0];
     var digitPos = randInt(5);
@@ -455,7 +574,7 @@
     var elapsed = Date.now() - gameStart;
     var n = history.length;
     document.getElementById('winMeta').textContent =
-      'Solved in ' + n + ' ' + (n === 1 ? 'guess' : 'guesses') + ' · ' + formatDuration(elapsed);
+      'Solved in ' + n + ' ' + (n === 1 ? 'guess' : 'guesses') + ' · ' + formatDuration(elapsed) + ' · ' + MODES[mode].tag;
     var html = '';
     for (var i = 0; i < history.length; i++) {
       var h = history[i];
@@ -491,6 +610,50 @@
 
   document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
 
+  var modeTag = document.getElementById('modeTag');
+  var subtitleEl = document.getElementById('subtitle');
+  var instrEl = document.getElementById('instr');
+  var settings = document.getElementById('settings');
+  var modeOpts = Array.prototype.slice.call(document.querySelectorAll('.mode-opt'));
+
+  function applyModeLabels() {
+    var m = MODES[mode];
+    modeTag.textContent = m.tag;
+    subtitleEl.textContent = m.subtitle;
+    instrEl.textContent = m.instr;
+    modeOpts.forEach(function(o) {
+      o.classList.toggle('active', o.getAttribute('data-mode') === mode);
+    });
+  }
+
+  function openSettings() {
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    applyModeLabels();
+    settings.classList.add('show');
+  }
+
+  function closeSettings() {
+    settings.classList.remove('show');
+  }
+
+  document.getElementById('gearBtn').addEventListener('click', openSettings);
+  modeTag.addEventListener('click', openSettings);
+  settings.addEventListener('click', function(e) {
+    if (e.target === settings) closeSettings();
+  });
+  modeOpts.forEach(function(o) {
+    o.addEventListener('click', function() {
+      var picked = o.getAttribute('data-mode');
+      closeSettings();
+      if (picked === mode) return;
+      mode = picked;
+      try { localStorage.setItem('ctc-mode', mode); } catch (e) {}
+      applyModeLabels();
+      newGame();
+    });
+  });
+
+  applyModeLabels();
   newGame();
 })();
 </script>
