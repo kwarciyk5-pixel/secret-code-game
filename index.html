@@ -34,6 +34,7 @@
     align-items: center;
     padding: calc(env(safe-area-inset-top) + 48px) 20px 12px;
     width: 100%;
+    flex-shrink: 0;
   }
   h1 {
     font-size: 30px;
@@ -153,15 +154,13 @@
     transform: translateY(1px);
   }
   .history-wrap {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 24px 20px calc(env(safe-area-inset-bottom) + 20px);
-    max-height: 55vh;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    padding: 4px 20px calc(env(safe-area-inset-bottom) + 20px);
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     display: none;
-    background: linear-gradient(180deg, transparent 0%, #000 15%);
   }
   .history-wrap.show { display: block; }
   .reveal {
@@ -379,6 +378,8 @@
   var historyList = document.getElementById('historyList');
   var secretReveal = document.getElementById('secretReveal');
   var advancingByType = false;
+  var lastTapTime = 0;
+  var lastTapSlot = -1;
 
   function randInt(max) {
     var arr = new Uint32Array(1);
@@ -492,6 +493,19 @@
           }
         } catch (e) {}
       }, 0);
+    });
+    slot.addEventListener('touchend', function() {
+      var now = Date.now();
+      if (lastTapSlot === i && now - lastTapTime < 350 && slot.value) {
+        setTimeout(function() {
+          try { slot.setSelectionRange(0, slot.value.length); } catch (e) {}
+        }, 60);
+        lastTapTime = 0;
+        lastTapSlot = -1;
+        return;
+      }
+      lastTapTime = now;
+      lastTapSlot = i;
     });
     slot.addEventListener('paste', function(e) {
       e.preventDefault();
